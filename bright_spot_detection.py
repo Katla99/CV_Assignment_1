@@ -21,11 +21,21 @@ while(True):
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(gray)
         cv2.circle(frame, max_loc, 10, (0, 255, 0), -1)
 
-    # Rauðasti punkturinn
+    # Rauða channellið
         red_channel = frame[:, :, 2]  # Extract the red channel
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(red_channel)
-        cv2.circle(frame, max_loc, 10, (0, 0, 255), -1)  # Mark the reddest spot with a red circle
+    # Split the channels
+        blue_channel, green_channel, red_channel = cv2.split(frame)
 
+        # Setja lítið gildi svo það sé aldrei deilt með núll 
+        epsilon = 1e-6
+        total_intensity = red_channel + green_channel + blue_channel + epsilon
+
+        # Reikna rauða normalized intensity
+        normalized_red = red_channel / total_intensity
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(normalized_red)
+        # Merkja með rauðum punkti
+        cv2.circle(frame, max_loc, 10, (0, 0, 255), -1)
+        
     # Mæla FPS
     end_time = time.time()
     fps = 1 / (end_time - start_time)  # FPS calculation
