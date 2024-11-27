@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import time
 
+# Capture video 
 video_capture = cv2.VideoCapture(0)
 '''
 Glósur úr tíma 
@@ -13,15 +14,15 @@ Glósur úr tíma
         i_2max = i_2
 '''
 def RANSAC(edge_points):
-    MAX_inliers = 0
-    best_line_points = None
+    MAX_inliers = 0 # Highest number of inliers
+    best_line_points = None # Stores endpoints of best line (line with most inliers)
 
     if len(edge_points) > 1:
         for _ in range(1000):
             # Select two points at random
             idx1, idx2 = np.random.choice(len(edge_points), size=2, replace=False)
 
-            point_1 = edge_points[idx1][::-1]
+            point_1 = edge_points[idx1][::-1] # Reverse points to [x,y]
             point_2 = edge_points[idx2][::-1]
             
             #random_points = random.sample(range(len(edge_points)), 2)  # Randomly select two indices
@@ -36,14 +37,14 @@ def RANSAC(edge_points):
             # Normalize line parameters
             A, B, C = A / np.sqrt(A**2 + B**2), B / np.sqrt(A**2 + B**2), C / np.sqrt(A**2 + B**2)
 
-            # Compute distances of all points to the line
+            # Geomatric distance calculations:
             distances = np.abs(A * edge_points[:, 1] + B * edge_points[:, 0] + C)
 
             # Count inliers
-            inliers = distances <= 2
-            N_inliers = np.sum(inliers)
+            inliers = distances <= 2 # Define that points with a distance 2 or less are inliers
+            N_inliers = np.sum(inliers) # Count inliers
 
-            # Update the best line if this one has more inliers
+            # Update
             if N_inliers > MAX_inliers:
                 MAX_inliers = N_inliers
                 best_line_points = (point_1, point_2)
@@ -57,12 +58,13 @@ while True:
     if not ret:
         break
 
-    # Preprocess frame for edge detection
+    # Edge detection with Canny. Thesholds for detecting edges, 
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     edge_image = cv2.Canny(gray_frame, 100, 150)
 
-    # Extract edge coordinates and 
+    # Find all pixels that are classified as edges
     edge_points = np.column_stack(np.where(edge_image != 0))
+    #To speed up the RANSAC process a subset of the edge points is selected (500)
     k = max(1, len(edge_points) // 500)  # Sample every k-th point
     sampled_points = edge_points[::k]
     
